@@ -5,21 +5,24 @@ import {
   Box,
   Chip,
   Drawer,
-  IconButton,
   List,
   ListItemButton,
   ListItemText,
+  Stack,
   Toolbar,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
+import IconButton from '@mui/material/IconButton'
 import CheckroomIcon from '@mui/icons-material/Checkroom'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
-import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined'
+import { useAppSelector } from '../app/hooks'
+import { useCollaborationSync } from '../features/collaboration/useCollaborationSync'
+import SyncStatus from '../features/collaboration/SyncStatus'
+import { formatRevision } from '../features/collaboration/model'
 
 const nav = [
   { to: '/', label: '开发总览', icon: <DashboardOutlinedIcon /> },
@@ -30,8 +33,12 @@ const nav = [
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  useCollaborationSync()
+  const selectedId = useAppSelector((state) => state.collaboration.selectedId)
+  const doc = useAppSelector((state) => state.collaboration.docs[selectedId])
+
   const drawer = (
-    <Box sx={{ width: 242, minHeight: '100%', bgcolor: '#262a2b', color: '#eef1ef' }}>
+    <Box sx={{ width: 242, minHeight: '100%', bgcolor: '#262a2b', color: '#eef1ef', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.2, borderBottom: '1px solid rgba(255,255,255,.1)' }}>
         <Box sx={{ width: 38, height: 38, display: 'grid', placeItems: 'center', border: '1px solid #74aaa0', borderRadius: 1 }}>
           <CheckroomIcon fontSize="small" />
@@ -61,12 +68,15 @@ export default function Layout() {
           </ListItemButton>
         ))}
       </List>
-      <Box sx={{ mx: 1.5, mt: 'auto', p: 1.5, border: '1px solid rgba(255,255,255,.1)', borderRadius: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-          <CloudDoneOutlinedIcon sx={{ fontSize: 16, color: '#74b79d' }} />
-          <Typography fontSize={11}>草稿已实时保存</Typography>
+      <Box sx={{ mt: 'auto', p: 1.5 }}>
+        <SyncStatus />
+        <Box sx={{ mt: 1.2, p: 1.3, border: '1px solid rgba(255,255,255,.1)', borderRadius: 1.5 }}>
+          <Typography fontSize={11} fontWeight={750}>当前评审修订</Typography>
+          <Stack direction="row" spacing={0.6} flexWrap="wrap">
+            <Chip size="small" label={doc ? formatRevision(doc.revision) : '读取中…'} sx={{ mt: 0.6 }} />
+            {doc?.locked && <Chip size="small" color="success" label="快照已冻结" sx={{ mt: 0.6 }} />}
+          </Stack>
         </Box>
-        <Typography color="#8f9a98" fontSize={10} mt={0.8}>最后同步 16:42 · 3 位协作者</Typography>
       </Box>
     </Box>
   )

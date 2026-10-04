@@ -1,13 +1,28 @@
+import { useEffect } from 'react'
 import { Box, Button, Chip, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
-import { selectSample } from '../features/developmentSlice'
+import { selectSample } from '../features/collaboration/collaborationSlice'
+import { loadSample } from '../features/collaboration/thunks'
+import { formatRevision } from '../features/collaboration/model'
 
 export default function StylesPage() {
   const dispatch = useAppDispatch()
-  const { samples, selectedId } = useAppSelector((state) => state.development)
-  const selected = samples.find((item) => item.id === selectedId) ?? samples[0]
+  const { samples, selectedId, docs } = useAppSelector((state) => {
+    const list = Object.values(state.collaboration.docs).map((doc) => doc.sample)
+    return { samples: list, selectedId: state.collaboration.selectedId, docs: state.collaboration.docs }
+  })
+  const selectedDoc = docs[selectedId]
+  const selected = selectedDoc?.sample ?? samples[0]
+
+  useEffect(() => {
+    if (selected && selected.id !== selectedId) dispatch(selectSample(selected.id))
+  }, [dispatch, selected, selectedId])
+
+  if (!selected || !selectedDoc) {
+    return <Box className="page"><Typography color="text.secondary">正在从协作服务加载款式档案…</Typography></Box>
+  }
 
   return (
     <Box className="page">
@@ -15,7 +30,7 @@ export default function StylesPage() {
         <Box>
           <Typography className="eyebrow">STYLE FILES / 款式档案</Typography>
           <Typography component="h1" fontWeight={800}>规格、物料与样品轮次</Typography>
-          <Typography color="text.secondary">款式档案是批注、尺寸修订和审核记录的单一来源。</Typography>
+          <Typography color="text.secondary">款式档案来自协作服务端，多人评审共用同一份修订后数据。当前修订 {formatRevision(selectedDoc.revision)}。</Typography>
         </Box>
         <Button variant="contained" startIcon={<AddPhotoAlternateOutlinedIcon />}>新建款式档案</Button>
       </Box>
@@ -31,7 +46,10 @@ export default function StylesPage() {
           {samples.map((sample) => (
             <Button
               key={sample.id}
-              onClick={() => dispatch(selectSample(sample.id))}
+              onClick={() => {
+                dispatch(selectSample(sample.id))
+                void dispatch(loadSample(sample.id))
+              }}
               sx={{
                 display: 'block',
                 width: '100%',
@@ -49,6 +67,7 @@ export default function StylesPage() {
               <Stack direction="row" spacing={0.6} mt={0.8}>
                 <Chip size="small" label={sample.owner} />
                 <Chip size="small" label={sample.status} color={sample.status === '待审核' ? 'warning' : 'default'} />
+                <Chip size="small" variant="outlined" label={formatRevision(docs[sample.id]?.revision ?? 0)} />
               </Stack>
             </Button>
           ))}
@@ -63,6 +82,7 @@ export default function StylesPage() {
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip label={selected.category} />
               <Chip label={selected.status} color={selected.status === '已锁定' ? 'success' : 'warning'} />
+              {selectedDoc.locked && <Chip color="success" label="快照冻结" />}
             </Stack>
           </Box>
           <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>

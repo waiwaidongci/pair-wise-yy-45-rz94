@@ -36,6 +36,8 @@ export const seedSamples: Sample[] = [
       { id: 'RV-01', author: '周研', role: '版师', content: '前片肩线内收 0.6cm，袖窿同步下落 0.3cm。', affectedPart: '肩袖', status: '待决定' },
       { id: 'RV-02', author: '沈岚', role: '产品开发', content: '维持袖长，仅调整袖山吃势，避免改变视觉比例。', affectedPart: '袖山', status: '待决定' },
     ],
+    drafts: {},
+    decisions: [],
     attachments: [
       { name: '第二轮正面.jpg', type: '样衣照片', owner: '沈岚' },
       { name: '尺寸实测_0926.xlsx', type: '尺寸表', owner: '苏州明裁' },
@@ -70,6 +72,8 @@ export const seedSamples: Sample[] = [
     proposals: [
       { id: 'RV-11', author: '宁波原野', role: '供应商', content: '门襟增加定位钻眼，压线稳定性可控制在 ±0.2cm。', affectedPart: '门襟', status: '待决定' },
     ],
+    drafts: {},
+    decisions: [],
     attachments: [{ name: '第一轮背片.jpg', type: '样衣照片', owner: '陈曼' }],
     comments: [],
   },

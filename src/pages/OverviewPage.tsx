@@ -1,22 +1,30 @@
 import { Box, Button, Chip, LinearProgress, Stack, Typography } from '@mui/material'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { useNavigate } from 'react-router-dom'
-import { useAppSelector } from '../app/hooks'
+import { useAppDispatch, useAppSelector } from '../app/hooks'
+import { selectSample } from '../features/collaboration/collaborationSlice'
+import { loadSample } from '../features/collaboration/thunks'
+import { formatRevision } from '../features/collaboration/model'
 
 export default function OverviewPage() {
-  const samples = useAppSelector((state) => state.development.samples)
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const samples = useAppSelector((state) => Object.values(state.collaboration.docs).map((doc) => doc.sample))
+  const docs = useAppSelector((state) => state.collaboration.docs)
+  const queueLength = useAppSelector((state) => state.collaboration.queue.length)
   const pendingProposals = samples.reduce((sum, item) => sum + item.proposals.filter((proposal) => proposal.status === '待决定').length, 0)
   const pendingAnnotations = samples.reduce((sum, item) => sum + item.annotations.filter((annotation) => annotation.status === '待处理').length, 0)
-  const averagePass = Math.round(
-    (samples.reduce((sum, sample) => {
-      const measurements = sample.measurements['第三轮']
-      const passed = measurements.filter((item) => Math.abs(item.actual - item.spec) <= item.tolerance).length
-      return sum + passed / measurements.length
-    }, 0) /
-      samples.length) *
-      100,
-  )
+  const averagePass = samples.length
+    ? Math.round(
+        (samples.reduce((sum, sample) => {
+          const measurements = sample.measurements['第三轮']
+          const passed = measurements.filter((item) => Math.abs(item.actual - item.spec) <= item.tolerance).length
+          return sum + passed / measurements.length
+        }, 0) /
+          samples.length) *
+          100,
+      )
+    : 0
 
   return (
     <Box className="page">
@@ -24,7 +32,7 @@ export default function OverviewPage() {
         <Box>
           <Typography className="eyebrow">PRODUCT DEVELOPMENT / 产品开发</Typography>
           <Typography component="h1" fontWeight={800}>打样轮次总览</Typography>
-          <Typography color="text.secondary">关注超差、待决方案与审核节奏，所有数据来自本地 MSW 服务。</Typography>
+          <Typography color="text.secondary">多人协作评审：修订由服务端统一编号，本地未提交操作 {queueLength} 项（断网自动排队，恢复后按序合并）。</Typography>
         </Box>
         <Button variant="contained" onClick={() => navigate('/review')}>进入样衣评审</Button>
       </Box>
@@ -34,7 +42,7 @@ export default function OverviewPage() {
           ['在开发款式', samples.length, '2 家供应商协同'],
           ['尺寸达标率', `${averagePass}%`, '第三轮综合结果'],
           ['待决定改版', pendingProposals, '需负责人采纳'],
-          ['未关闭批注', pendingAnnotations, '包含尺寸与工艺'],
+          ['未关闭批注', pendingAnnotations, queueLength ? `另有 ${queueLength} 项操作待同步` : '包含尺寸与工艺'],
         ].map(([label, value, hint]) => (
           <Box className="panel" key={String(label)} sx={{ p: 2 }}>
             <Typography color="#756f69" fontSize={12}>{label}</Typography>
@@ -60,6 +68,8 @@ export default function OverviewPage() {
                   <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                     <Typography fontWeight={800}>{sample.styleCode} · {sample.styleName}</Typography>
                     <Chip size="small" label={sample.status} color={sample.status === '已锁定' ? 'success' : sample.status === '待审核' ? 'warning' : 'default'} />
+                    <Chip size="small" variant="outlined" label={formatRevision(docs[sample.id]?.revision ?? 0)} />
+                    {docs[sample.id]?.locked && <Chip size="small" color="success" label="已冻结" />}
                   </Stack>
                   <Typography color="text.secondary" fontSize={12} mt={0.8}>{sample.fabric} · {sample.colorway} · 交样 {sample.dueDate}</Typography>
                   <LinearProgress variant="determinate" value={(passed / third.length) * 100} sx={{ mt: 1.5, maxWidth: 380, height: 6, borderRadius: 8 }} />
@@ -71,6 +81,8 @@ export default function OverviewPage() {
                     size="small"
                     sx={{ mt: 0.8 }}
                     onClick={() => {
+                      dispatch(selectSample(sample.id))
+                      void dispatch(loadSample(sample.id))
                       navigate('/review')
                     }}
                   >
@@ -80,6 +92,11 @@ export default function OverviewPage() {
               </Box>
             )
           })}
+          {samples.length === 0 && (
+            <Box sx={{ p: 4 }}>
+              <Typography color="text.secondary" align="center">正在加载协作服务数据…</Typography>
+            </Box>
+          )}
         </Box>
 
         <Box className="panel" sx={{ p: 2 }}>
