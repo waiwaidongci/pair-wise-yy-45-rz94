@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
@@ -6,8 +6,17 @@ import { selectSample } from '../features/developmentSlice'
 
 export default function StylesPage() {
   const dispatch = useAppDispatch()
-  const { samples, selectedId } = useAppSelector((state) => state.development)
+  const selectedId = useAppSelector((state) => state.development.selectedId)
+  const samples = useAppSelector((state) => Object.values(state.collab.working))
   const selected = samples.find((item) => item.id === selectedId) ?? samples[0]
+
+  if (!selected) {
+    return (
+      <Box className="page">
+        <Alert severity="info">正在加载款式档案…</Alert>
+      </Box>
+    )
+  }
 
   return (
     <Box className="page">

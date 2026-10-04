@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../app/hooks'
 
 export default function OverviewPage() {
-  const samples = useAppSelector((state) => state.development.samples)
+  const samples = useAppSelector((state) => Object.values(state.collab.working))
   const navigate = useNavigate()
   const pendingProposals = samples.reduce((sum, item) => sum + item.proposals.filter((proposal) => proposal.status === '待决定').length, 0)
   const pendingAnnotations = samples.reduce((sum, item) => sum + item.annotations.filter((annotation) => annotation.status === '待处理').length, 0)

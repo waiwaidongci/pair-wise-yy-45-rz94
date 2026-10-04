@@ -19,7 +19,10 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
-import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined'
+import CollabStatus from '../components/CollabStatus'
+import OutboxPanel from '../components/OutboxPanel'
+import ConflictDialog from '../components/ConflictDialog'
+import { useAppSelector } from '../app/hooks'
 
 const nav = [
   { to: '/', label: '开发总览', icon: <DashboardOutlinedIcon /> },
@@ -30,6 +33,7 @@ const nav = [
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const conflictSampleId = useAppSelector((state) => Object.keys(state.collab.conflicts)[0] ?? null)
   const drawer = (
     <Box sx={{ width: 242, minHeight: '100%', bgcolor: '#262a2b', color: '#eef1ef' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.2, borderBottom: '1px solid rgba(255,255,255,.1)' }}>
@@ -39,6 +43,10 @@ export default function Layout() {
         <Box>
           <Typography fontWeight={800} fontSize={14}>MORROW 开发台</Typography>
           <Typography color="#9aa6a3" fontSize={11}>2026 秋冬 · 女装</Typography>
+        </Box>
+        <Box sx={{ flex: 1 }} />
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+          <OutboxPanel />
         </Box>
       </Box>
       <List sx={{ px: 1.2, py: 2 }}>
@@ -61,13 +69,7 @@ export default function Layout() {
           </ListItemButton>
         ))}
       </List>
-      <Box sx={{ mx: 1.5, mt: 'auto', p: 1.5, border: '1px solid rgba(255,255,255,.1)', borderRadius: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-          <CloudDoneOutlinedIcon sx={{ fontSize: 16, color: '#74b79d' }} />
-          <Typography fontSize={11}>草稿已实时保存</Typography>
-        </Box>
-        <Typography color="#8f9a98" fontSize={10} mt={0.8}>最后同步 16:42 · 3 位协作者</Typography>
-      </Box>
+      <CollabStatus />
     </Box>
   )
 
@@ -77,6 +79,8 @@ export default function Layout() {
         <Toolbar sx={{ minHeight: 52 }}>
           <IconButton color="inherit" onClick={() => setMobileOpen(true)}><MenuIcon /></IconButton>
           <Typography fontWeight={800} ml={1}>MORROW 开发台</Typography>
+          <Box sx={{ flex: 1 }} />
+          <OutboxPanel />
         </Toolbar>
       </AppBar>
       <Box component="nav" sx={{ width: { md: 242 }, flexShrink: { md: 0 } }}>
@@ -90,6 +94,7 @@ export default function Layout() {
       <Box component="main" sx={{ flex: 1, minWidth: 0, pt: { xs: '52px', md: 0 } }}>
         <Outlet />
       </Box>
+      {conflictSampleId && <ConflictDialog sampleId={conflictSampleId} />}
     </Box>
   )
 }
